@@ -1,0 +1,6 @@
+services:
+  app:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      - "5000:80"

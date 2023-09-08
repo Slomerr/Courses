@@ -14,24 +14,4 @@ public class CoursesDbContext : DbContext
     public CoursesDbContext(DbContextOptions<CoursesDbContext> options) : base(options)
     {
     }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<StudyGroup>(x =>
-        {
-            x.HasMany(g => g.Employees)
-                .WithMany(e => e.StudyGroups);
-
-            x.HasOne(g => g.Teacher);
-
-            x.HasOne(g => g.Course);
-        });
-
-        modelBuilder.Entity<Organization>(x =>
-        {
-            x.HasOne(o => o.Teacher);
-
-            x.HasMany(o => o.Employees);
-        });
-    }
 }

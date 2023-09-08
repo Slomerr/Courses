@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using System.Net;
+using System.Text.Encodings.Web;
+using AutoMapper;
 using Courses.Models;
 using Courses.Models.Db;
 using Courses.Models.Dtos;
@@ -43,15 +45,15 @@ public class StudyGroupsController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([Bind("Name,TeacherId")] StudyGroupCreateDto createDto)
+    public async Task<IActionResult> Create(int teacherId, string name)
     {
-        if (!StudyGroup.ValidateName(createDto.Name, out var message))
+        if (!StudyGroup.ValidateName(name, out var message))
         {
             Console.WriteLine($"--> Trying create group using not valid name [{message}]");
             return RedirectToAction(nameof(CreateGroup));
         }
 
-        StudyGroup group = await _dbContext.StudyGroups.FirstOrDefaultAsync(x => x.Name == createDto.Name);
+        StudyGroup group = await _dbContext.StudyGroups.FirstOrDefaultAsync(x => x.Name == name);
         if (group != null)
         {
             Console.WriteLine($"--> Trying create a new group, but a group with some name already exist");
@@ -65,15 +67,20 @@ public class StudyGroupsController : Controller
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
 
-        bool validTeacherId = await _dbContext.Teachers.AnyAsync(x => x.TeacherId == createDto.TeacherId);
+        bool validTeacherId = await _dbContext.Teachers.AnyAsync(x => x.TeacherId == teacherId);
         if (!validTeacherId)
         {
             Console.WriteLine("[Error] --> Couldn't find any teacher at try create study group, wrong create dto");
             return RedirectToAction(nameof(CreateGroup));
         }
 
-        group = _mapper.Map<StudyGroup>(createDto);
-        group.CourseId = course.CourseId;
+        group = new StudyGroup()
+        {
+            //StudyGroupId = await _dbContext.StudyGroups.CountAsync() + 1,
+            Name = name,
+            CourseId = course.CourseId,
+            TeacherId = teacherId
+        };
         group = (await _dbContext.StudyGroups.AddAsync(group)).Entity;
         await _dbContext.SaveChangesAsync();
         return RedirectToAction(nameof(EditGroup), new { id = group.StudyGroupId });

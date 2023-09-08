@@ -39,7 +39,7 @@ public class EmployeesController : Controller
 
     public async Task<IActionResult> GetEmployeesFroOrganizationNotInGroup(int organizationId, int groupId)
     {
-        var employees = _dbContext.Employees
+        var employees  = _dbContext.Employees
             .FromSql(SqlQueries.GetEmployeesNotInGroup(groupId, organizationId));
         var list = new List<SelectListItem>();
         list.Add(new SelectListItem(string.Empty, "0"));

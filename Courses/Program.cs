@@ -1,4 +1,3 @@
-using Courses.Models;
 using Courses.Models.Db;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +8,22 @@ services.AddControllersWithViews();
 services.AddAntiforgery(o => o.HeaderName = "XSRF-TOKEN");
 services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-services.AddDbContext<CoursesDbContext>(options =>
+if (builder.Environment.IsProduction())
 {
-    options.UseSqlite("Filename=Courses.db");
-});
+    builder.Services.AddDbContext<CoursesDbContext>(options =>
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString(DbConstants.DbConnectionString));
+        options.UseSnakeCaseNamingConvention();
+    });
+}
+else
+{
+    builder.Services.AddDbContext<CoursesDbContext>(options =>
+    {
+        options.UseSqlite("Filename=Courses.db");
+        options.UseSnakeCaseNamingConvention();
+    });
+}
 
 var app = builder.Build();
 
@@ -29,9 +40,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=StudyGroups}/{action=GetAllGroups}/{id?}");
 
-using (var serviceScope = app.Services.CreateScope())
-{
-    serviceScope.ServiceProvider.GetService<CoursesDbContext>()?.Database.Migrate();
-}
+new DbInitializer().InitDb(app);
 
 app.Run();

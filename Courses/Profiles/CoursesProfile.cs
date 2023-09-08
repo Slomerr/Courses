@@ -34,7 +34,6 @@ public class CoursesProfile : Profile
                     FullName = s.Teacher.FullName,
                     Email = s.Teacher.Email
                 }));
-        CreateMap<StudyGroupCreateDto, StudyGroup>();
         CreateMap<Employee, EmployeeReadDto>();
         CreateMap<Organization, OrganizationReadDto>();
     }
