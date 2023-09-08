@@ -1,0 +1,25 @@
+﻿@model Courses.Models.ViewModels.CreateGroupViewModel
+@{
+    ViewData["Title"] = "Создание учебной группы";
+}
+
+<h3>Создать учебную группу</h3>
+<div>
+    <a asp-action="GetAllGroups">Учебные группы > Создать учебную группу</a>
+</div>
+
+<form asp-action="Create">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <label class="label-bold">Преподаватель</label><br/>
+    <select name="TeacherId" class="select-box">
+        @foreach (var item in Model.Teachers)
+        {
+            <option value="@item.TeacherId">@item.FullName</option>
+        }
+    </select><br/>
+    <label class="label-bold">Название учебной группы</label><br/>
+    <input type="text" name="Name" class="placeholder-box"/>
+    <span class="text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"/><br/>
+    <input type="submit" value="Создать" class="btn btn-primary"/>
+</form>
+

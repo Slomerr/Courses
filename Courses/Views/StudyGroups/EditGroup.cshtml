@@ -1,0 +1,56 @@
+﻿@model Courses.Models.ViewModels.EditGroupViewModel
+@{
+    ViewData["Title"] = "Редактирование учебных групп";
+}
+<div>
+    <h3>Редактировать учебную группу</h3>
+</div>
+<div>
+    <a asp-action="GetAllGroups">Учебные группы > Создать учебную группу</a>
+</div>
+
+<div>
+    <label class="label">Преподаватель: </label>
+    <label class="label-bold">@Model.Group.Teacher.FullName</label>
+</div>
+
+<form asp-action="EditName">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" id="groupId" name="groupId" value="@Model.Group.StudyGroupId"/>
+    <label class="label">Название учебной группы</label><br/>
+    <input type="text" id="newName" name="newName" value="@Model.Group.Name" class="placeholder-box"/>
+    <span class="text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"/>
+    <input type="submit" value="Сохранить изменения" id="updateName" class="btn btn-primary"/>
+</form>
+
+<div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Студент</th>
+            <th>Организация</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Group.Employees)
+        {
+            <tr>
+                <td>@item.FullName</td>
+                <td>@item.Organization.Name</td>
+                <td>
+                    <form asp-action="DeleteEmployee">
+                        <input type="hidden" name="studyGroupId" value="@Model.Group.StudyGroupId"/>
+                        <input type="hidden" name="employeeId" value="@item.EmployeeId"/>
+                        <input type="submit" value="Удалить"  class="btn btn-link"/>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <form asp-controller="Employees" asp-action="AddEmployeeToGroup" >
+        <input type="hidden" name="studyGroupId" value="@Model.Group.StudyGroupId"/>
+        <input type="submit" value="Добавить студента" class="btn btn-primary">
+    </form>
+</div>

@@ -2,8 +2,12 @@
 using Courses.Models;
 using Courses.Models.Db;
 using Courses.Models.Dtos;
+using Courses.Models.ViewModels;
+using Courses.Views.StudyGroups;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Update.Internal;
 
 namespace Courses.Controllers;
 
@@ -18,9 +22,9 @@ public class StudyGroupsController : Controller
         _mapper = mapper;
     }
 
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAllGroups()
     {
-        var groups = 
+        var groups =
             await _dbContext.StudyGroups
                 .Include(x => x.Course)
                 .Include(x => x.Teacher)
@@ -28,67 +32,101 @@ public class StudyGroupsController : Controller
                 .ThenInclude(x => x.Organization)
                 .ToListAsync();
         var views = _mapper.Map<IEnumerable<StudyGroupReadDto>>(groups);
-        return Ok(views);
+        return View(views);
     }
 
-    public async Task<IActionResult> Get(int id)
+    public async Task<IActionResult> CreateGroup()
     {
-        var result = await _dbContext.StudyGroups
+        var teachers = await _dbContext.Teachers.ToListAsync();
+        var teacherReadDtos = _mapper.Map<IEnumerable<TeacherReadDto>>(teachers);
+        return View(new CreateGroupViewModel { Teachers = teacherReadDtos });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([Bind("Name,TeacherId")] StudyGroupCreateDto createDto)
+    {
+        if (!StudyGroup.ValidateName(createDto.Name, out var message))
+        {
+            Console.WriteLine($"--> Trying create group using not valid name [{message}]");
+            return RedirectToAction(nameof(CreateGroup));
+        }
+
+        StudyGroup group = await _dbContext.StudyGroups.FirstOrDefaultAsync(x => x.Name == createDto.Name);
+        if (group != null)
+        {
+            Console.WriteLine($"--> Trying create a new group, but a group with some name already exist");
+            return RedirectToAction(nameof(CreateGroup));
+        }
+
+        var course = await _dbContext.Courses.FirstOrDefaultAsync();
+        if (course == null)
+        {
+            Console.WriteLine("--> Couldn't find any course at try create study group");
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
+        bool validTeacherId = await _dbContext.Teachers.AnyAsync(x => x.TeacherId == createDto.TeacherId);
+        if (!validTeacherId)
+        {
+            Console.WriteLine("[Error] --> Couldn't find any teacher at try create study group, wrong create dto");
+            return RedirectToAction(nameof(CreateGroup));
+        }
+
+        group = _mapper.Map<StudyGroup>(createDto);
+        group.CourseId = course.CourseId;
+        group = (await _dbContext.StudyGroups.AddAsync(group)).Entity;
+        await _dbContext.SaveChangesAsync();
+        return RedirectToAction(nameof(EditGroup), new { id = group.StudyGroupId });
+    }
+
+    public async Task<IActionResult> EditGroup(int id)
+    {
+        var group = await _dbContext.StudyGroups
             .Include(x => x.Course)
             .Include(x => x.Teacher)
             .Include(x => x.Employees)
             .ThenInclude(x => x.Organization)
             .FirstOrDefaultAsync(x => x.StudyGroupId == id);
-        if (result == null)
+        if (group == null)
         {
             return NotFound("Study group not found by id");
         }
 
-        var readDto = _mapper.Map<StudyGroupReadDto>(result);
-        return Ok(readDto);
+        var groupRead = _mapper.Map<StudyGroupReadDto>(group);
+        return View(new EditGroupViewModel { Group = groupRead });
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] StudyGroupCreateDto createDto)
+    public async Task<IActionResult> EditName(int groupId, string newName)
     {
-        StudyGroup group = await _dbContext.StudyGroups.FirstOrDefaultAsync(x => x.Name == createDto.Name);
-        if (group != null)
+        if (!StudyGroup.ValidateName(newName, out var message))
         {
-            return RedirectToAction(nameof(Get), new { id = group.StudyGroupId });
+            Console.WriteLine($"[Warning]-->{message} for {groupId} groupId");
+            return RedirectToAction(nameof(EditGroup),
+                new { id = groupId });
         }
-        
-        group = _mapper.Map<StudyGroup>(createDto);
-        group = (await _dbContext.StudyGroups.AddAsync(group)).Entity;
+
+        var group = await _dbContext.StudyGroups.FirstOrDefaultAsync(x => x.StudyGroupId == groupId);
+        if (group == null)
+        {
+            return BadRequest("Not correct group id");
+        }
+
+        var tempGroup = await _dbContext.StudyGroups.FirstOrDefaultAsync(x => x.Name == newName);
+        if (tempGroup != null)
+        {
+            Console.WriteLine($"--> Group with some name already exist [{newName}]");
+            return RedirectToAction(nameof(EditGroup),
+                new { id = groupId });
+        }
+
+        group.Name = newName;
         await _dbContext.SaveChangesAsync();
-        return RedirectToAction(nameof(Get), new { id = group.StudyGroupId });
-    }
-
-    [HttpPut]
-    public async Task<IActionResult> AddEmployee(int studyGroupId, int employeeId)
-    {
-        var studyGroup = await _dbContext.StudyGroups
-            .Include(x => x.Employees)
-            .FirstOrDefaultAsync(x => x.StudyGroupId == studyGroupId);
-        if (studyGroup != null)
-        {
-            var alreadyContains = studyGroup.Employees.Any(x => x.EmployeeId == employeeId);
-            if (!alreadyContains)
-            {
-                var employee = await _dbContext.Employees.FirstOrDefaultAsync(x => x.EmployeeId == employeeId);
-                if (employee != null)
-                {
-                    studyGroup.Employees.Add(employee);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-
-            return RedirectToAction(nameof(Get), new { id = studyGroupId });
-        }
-
-        return BadRequest("Study group not found by id");
+        return RedirectToAction(nameof(EditGroup),
+            new { id = groupId });
     }
     
-    [HttpPut]
+    [HttpPost]
     public async Task<IActionResult> DeleteEmployee(int studyGroupId, int employeeId)
     {
         var studyGroup = await _dbContext.StudyGroups
@@ -104,7 +142,7 @@ public class StudyGroupsController : Controller
                 await _dbContext.SaveChangesAsync();
             }
 
-            return RedirectToAction(nameof(Get), new { id = studyGroupId });
+            return RedirectToAction(nameof(EditGroup), new { id = studyGroupId });
         }
 
         return BadRequest("Study group not found by id");

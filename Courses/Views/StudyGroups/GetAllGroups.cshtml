@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Учебные группы";
+}
+
+@using Courses.Controllers
+@model IEnumerable<Courses.Models.Dtos.StudyGroupReadDto>
+
+<html>
+<body>
+<h1>Учебные группы</h1>
+<table class="table">
+    <tr>
+        <th>Название</th>
+        <th>Преподаватель</th>
+        <th>Количество студентов</th>
+        <th></th>
+    </tr>
+    @foreach (var group in Model)
+    {
+        <tr>
+            <td>@group.Name</td>
+            <td>@group.Teacher.FullName</td>
+            <td>@group.Employees.Count</td>
+            <td>
+                <a asp-action="EditGroup" asp-route-id="@group.StudyGroupId">Редактировать</a>
+            </td>
+        </tr>
+    }
+</table>
+<button type="button" onclick="window.location.href = 'studygroups/creategroup'" class="btn btn-primary">Создать учебную группу</button>
+</body>
+</html>

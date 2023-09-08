@@ -21,6 +21,7 @@ public class CoursesProfile : Profile
                     : s.Employees.Select(e => new EmployeeReadDto() 
                     {
                         FullName = e.FullName,
+                        EmployeeId = e.EmployeeId,
                         Organization = new OrganizationReadDto
                         {
                             Name = e.Organization.Name,
@@ -34,5 +35,7 @@ public class CoursesProfile : Profile
                     Email = s.Teacher.Email
                 }));
         CreateMap<StudyGroupCreateDto, StudyGroup>();
+        CreateMap<Employee, EmployeeReadDto>();
+        CreateMap<Organization, OrganizationReadDto>();
     }
 }

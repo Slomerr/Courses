@@ -1,0 +1,48 @@
+﻿@model Courses.Models.ViewModels.AddEmployeeViewModel
+@{
+    ViewData["Title"] = "Добавление студента";
+}
+
+<h3>Добавить студента</h3>
+<div>
+    <a asp-controller="StudyGroups" asp-action="EditGroup" asp-route-id="@Model.StudyGroupId">
+        Учебные группы > Редактировать учебную группу > Создать учебную группу
+    </a>
+</div>
+
+<label class="label-bold">Организация</label><br/>
+<select name="organizationId" id="organization" class="select-box">
+    @foreach (var item in Model.Organizations)
+    {
+        <option value="@item.Value">@item.Text</option>
+    }
+</select>
+<form asp-action="AddEmployee" method="post">
+    <input type="hidden" name="studyGroupId" value="@Model.StudyGroupId"/>
+    <label class="label-bold">Сотрудник</label><br/>
+    <select id="employeeId" name="employeeId" class="select-box"></select><br/>
+    <input type="submit" value="Добавить" class="btn btn-primary"/>
+</form>
+
+
+
+@section scripts{
+    <script type="text/javascript">
+    $(function () {
+        $("#organization").change(function (){
+            var id = $(this).val();
+            if (id > 0){
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("GetEmployeesFroOrganizationNotInGroup")/?organizationId=' + id + '&groupId=' + @Model.StudyGroupId, 
+                    success: function (data) {
+                        $("#employeeId").replaceWith(data);
+                        }
+                    });
+                }else{
+                    $("#employeeId").replaceWith(null);
+                }
+            });
+        })        
+</script>
+}

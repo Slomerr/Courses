@@ -1,14 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Courses.Models.Dtos;
 
 public class StudyGroupCreateDto
 {
-    [Required, NotNull]
+    [Required]
     public string Name { get; set; }
     [Required]
     public int TeacherId { get; set; }
-    [Required]
     public int CourseId { get; set; }
+
+    public bool IsValid()
+    {
+        return !string.IsNullOrEmpty(Name) && TeacherId > 0 && CourseId > 0;
+    }
 }

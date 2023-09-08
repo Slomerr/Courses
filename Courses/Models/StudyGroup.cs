@@ -16,4 +16,16 @@ public class StudyGroup
     {
         Employees = new List<Employee>();
     }
+
+    public static bool ValidateName(string name, out string message)
+    {
+        message = null;
+        if (string.IsNullOrEmpty(name))
+        {
+            message = "Empty name value";
+            return false;
+        }
+
+        return true;
+    }
 }

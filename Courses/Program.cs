@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
-//services.AddControllersWithViews();
-services.AddControllers();
+services.AddControllersWithViews();
+services.AddAntiforgery(o => o.HeaderName = "XSRF-TOKEN");
 services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 services.AddDbContext<CoursesDbContext>(options =>
@@ -27,7 +27,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=StudyGroups}/{action=GetAll}/{id?}");
+    pattern: "{controller=StudyGroups}/{action=GetAllGroups}/{id?}");
 
 using (var serviceScope = app.Services.CreateScope())
 {

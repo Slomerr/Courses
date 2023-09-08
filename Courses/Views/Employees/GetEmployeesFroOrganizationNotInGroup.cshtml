@@ -1,0 +1,9 @@
+﻿@model Courses.Models.ViewModels.AddEmployeePartialViewModel
+
+
+<select id="employeeId" name="employeeId" class="select-box">
+    @foreach (var item in Model.Employees)
+    {
+        <option value="@item.Value">@item.Text</option>
+    }
+</select>
